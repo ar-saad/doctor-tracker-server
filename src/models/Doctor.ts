@@ -43,8 +43,8 @@ const doctorSchema = new Schema<IDoctor>(
   { timestamps: true },
 );
 
-// Text index kept for completeness; Phase 3 search uses regex for partial matches.
-doctorSchema.index({ name: "text", specialization: "text", hospital: "text" });
+// No text index: Phase 3 search is case-insensitive regex for partial matches,
+// which $text cannot do (it matches whole stemmed words only).
 doctorSchema.index({ specialization: 1 });
 doctorSchema.index({ hospital: 1 });
 doctorSchema.index({ createdAt: -1 });
