@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { ZodError } from "zod";
 import { ApiError } from "../utils/ApiError.js";
 import { isProduction } from "../config/env.js";
+import type { ApiErrorBody } from "../types/index.js";
 
 interface NormalizedError {
   statusCode: number;
@@ -104,5 +105,6 @@ export function errorHandler(
     console.error(error);
   }
 
-  res.status(statusCode).json({ success: false, message });
+  const body: ApiErrorBody = { success: false, message };
+  res.status(statusCode).json(body);
 }

@@ -1,11 +1,5 @@
 import type { Response } from "express";
-
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+import type { ApiSuccessBody, PaginationMeta } from "../types/index.js";
 
 /**
  * Every successful response in this API is
@@ -17,9 +11,11 @@ export function sendSuccess<T>(
   statusCode = 200,
   meta?: PaginationMeta,
 ): Response {
-  return res
-    .status(statusCode)
-    .json(meta ? { success: true, data, meta } : { success: true, data });
+  const body: ApiSuccessBody<T> = meta
+    ? { success: true, data, meta }
+    : { success: true, data };
+
+  return res.status(statusCode).json(body);
 }
 
 export function buildPaginationMeta(
