@@ -23,6 +23,9 @@ import type { CreatePatientInput } from "../schemas/patientSchema.js";
  */
 type IdRequest = Request<{ id: string }>;
 
+/** Nested patient routes carry the doctor id as `id` and the patient as `patientId`. */
+type DoctorPatientRequest = Request<{ id: string; patientId: string }>;
+
 const SEARCH_FIELDS = ["name", "specialization", "hospital"] as const;
 
 /**
@@ -192,6 +195,42 @@ export async function addPatientToDoctor(
   });
 
   sendSuccess(res, patient, 201);
+}
+
+/**
+ * DELETE /doctors/:id/patients/:patientId — removes a patient from this
+ * doctor's list.
+ *
+ * `doctor` is a required field on Patient, so there is no "unassign" state to
+ * move the patient into: removing it from the list *is* deleting the document,
+ * the same way deleteDoctor cascades.
+ *
+ * The delete is scoped by `doctor` rather than by `_id` alone, so a patient id
+ * belonging to another doctor cannot be deleted through this doctor's URL. The
+ * doctor is checked first only to keep the two 404s distinguishable — a scoped
+ * miss alone could not tell "no such doctor" from "not your patient".
+ */
+export async function removePatientFromDoctor(
+  req: DoctorPatientRequest,
+  res: Response,
+): Promise<void> {
+  const { id: doctorId, patientId } = req.params;
+
+  const exists = await Doctor.exists({ _id: doctorId });
+  if (!exists) {
+    throw ApiError.notFound("Doctor not found");
+  }
+
+  const patient = await Patient.findOneAndDelete({
+    _id: patientId,
+    doctor: doctorId,
+  }).lean();
+
+  if (!patient) {
+    throw ApiError.notFound("Patient not found for this doctor");
+  }
+
+  sendSuccess(res, { _id: patient._id });
 }
 
 /**

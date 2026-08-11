@@ -7,6 +7,7 @@ import {
   getDoctorFilterOptions,
   getDoctorPatients,
   getDoctors,
+  removePatientFromDoctor,
   updateDoctor,
 } from "../controllers/doctorController.js";
 import { validate } from "../middleware/validate.js";
@@ -34,5 +35,7 @@ router
   .route("/:id/patients")
   .get(getDoctorPatients)
   .post(validate(createPatientSchema), addPatientToDoctor);
+
+router.delete("/:id/patients/:patientId", removePatientFromDoctor);
 
 export default router;
