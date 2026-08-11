@@ -35,4 +35,26 @@ export const createPatientSchema = z.object({
     .min(1, "Condition is required"),
 });
 
+/**
+ * PUT /patients/:id is the one place `doctor` may be set from the body: it is
+ * how a patient is reassigned to another doctor. The 24-hex check keeps a
+ * malformed id out of Mongo — a CastError there would read as a 400 about the
+ * database rather than about the field. The controller still has to confirm the
+ * doctor exists; the shape is all a schema can know.
+ *
+ * Like the doctor schema, an empty body is rejected rather than treated as a
+ * no-op write that returns 200 as if something had changed.
+ */
+export const updatePatientSchema = createPatientSchema
+  .extend({
+    doctor: z
+      .string("Doctor is required")
+      .regex(/^[0-9a-fA-F]{24}$/, "Doctor must be a valid id"),
+  })
+  .partial()
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided",
+  });
+
 export type CreatePatientInput = z.infer<typeof createPatientSchema>;
+export type UpdatePatientInput = z.infer<typeof updatePatientSchema>;
